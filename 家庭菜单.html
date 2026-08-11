@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家庭手账菜单本</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+    <style>
+        * {margin: 0;padding: 0;box-sizing: border-box;font-family: 'ZCOOL KuaiLe', cursive, system-ui, sans-serif;}
+        body {background: #fff9e8;background-image: repeating-linear-gradient(0deg, transparent, transparent 28px, #f0e6d3 28px, #f0e6d3 29px),repeating-linear-gradient(90deg, transparent, transparent 28px, #f5eddc 28px, #f5eddc 29px);background-attachment: fixed;padding: 15px;color: #5c422e;}
+        .note-book {max-width: 1200px;margin: 0 auto;background: #fffef5;border: 2px solid #d4b896;border-radius: 12px;box-shadow: 4px 4px 12px #c9b08c, inset 0 0 30px rgba(212,184,150,0.15);padding: 30px 25px 25px;position: relative;}
+        .tape {position: absolute;width: 120px;height: 32px;background: rgba(255,180,180,0.65);top: -12px;left: 40px;transform: rotate(-8deg);box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
+        .tape-right {right: 40px;left: unset;background: rgba(180,220,255,0.65);transform: rotate(6deg);}
+        .title {text-align: center;font-size: 2.2rem;color: #6b4f38;margin-bottom: 20px;letter-spacing: 2px;}
+        .tab-wrap {display: flex;gap: 8px;margin-bottom: 20px;flex-wrap: wrap;border-bottom: 2px dashed #d4b896;padding-bottom: 12px;}
+        .tab-btn {padding: 8px 16px;border: 2px dashed #b89c7b;border-radius: 6px;background: #fff7e0;cursor: pointer;transition: 0.2s;font-size: 15px;}
+        .tab-btn:hover {background: #ffedc7;}
+        .tab-btn.active {background: #ffdfb3;border-style: solid;transform: translateY(-2px);}
+        .card {border: 1px dashed #b89c7b;border-radius: 10px;padding: 18px;background: #fffcf2;margin-bottom: 15px;box-shadow: 2px 2px 6px #e6d7c2;position: relative;}
+        .grid-menu {display: grid;grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));gap: 16px;}
+        .food-card {border: 2px solid #e0ccb0;border-radius: 10px;overflow: hidden;background: #fff;transition: 0.2s;}
+        .food-card:hover {transform: translateY(-3px);}
+        .food-img {width: 100%;height: 180px;object-fit: cover;border-bottom: 2px dashed #e0ccb0;}
+        .food-info {padding: 12px;}
+        .food-info h3 {margin-bottom: 8px;}
+        .tag {display: inline-block;padding: 3px 8px;font-size: 12px;border-radius: 4px;margin-right: 4px;color: #fff;}
+        .tag-cat {background: #73a8d8;}
+        .tag-hard-easy {background: #72c972;}
+        .tag-hard-middle {background: #e6b849;}
+        .tag-hard-hard {background: #e86868;}
+        .form-item {margin: 12px 0;}
+        label {display: block;margin-bottom: 4px;}
+        input, textarea, select {width: 100%;padding: 10px;border: 1px dashed #b89c7b;border-radius: 6px;background: #fffdf6;outline: none;font-size:14px;}
+        .btn-group {display: flex;gap: 10px;flex-wrap: wrap;margin-top:15px;}
+        button {padding: 9px 18px;border: none;border-radius: 6px;cursor: pointer;font-size:15px;}
+        .btn-primary {background: #ffbc73;}
+        .btn-success {background: #86cd82;color:#fff;}
+        .btn-danger {background: #ee7777;color:#fff;}
+        .btn-copy {background: #82bfe8;color:#fff;}
+        .today-item {padding:12px;border-left:4px solid #ffb366;background: #fff8ee;margin:8px 0;border-radius: 0 6px 6px 0;}
+        .empty-tip {text-align: center;padding:40px;color:#999;}
+        .sticky-note {background: #fff3b0;padding:15px;margin:10px 0;transform: rotate(-1deg);}
+        .cate-item{display:flex;justify-content:space-between;align-items:center;padding:10px;border:1px dashed #ccc;border-radius:6px;margin:8px 0}
+        @media (max-width:600px){.title{font-size:1.6rem;}.grid-menu{grid-template-columns:1fr;}}
+    </style>
+</head>
+<body>
+<div id="app" class="note-book">
+    <div class="tape"></div>
+    <div class="tape tape-right"></div>
+    <h1 class="title">🍱 家庭手账菜单本</h1>
+    <div class="tab-wrap">
+        <div class="tab-btn" :class="{active:tab=='list'}" @click="tab='list'">📚菜谱库</div>
+        <div class="tab-btn" :class="{active:tab=='category'}" @click="tab='category'">📁分类管理</div>
+        <div class="tab-btn" :class="{active:tab=='add'}" @click="tab='add'">✏️新增菜品</div>
+        <div class="tab-btn" :class="{active:tab=='random'}" @click="tab='random'">🎲随机点菜</div>
+        <div class="tab-btn" :class="{active:tab=='today'}" @click="tab='today'">📅今日菜单</div>
+    </div>
+
+    <!--分类管理页面（新增功能）-->
+    <div v-if="tab=='category'" class="card">
+        <h3>菜品分类自定义管理</h3>
+        <div class="form-item">
+            <label>添加新分类名称</label>
+            <input v-model="newCateName" placeholder="例如：川菜、早餐、面食、卤味">
+            <button class="btn-primary" style="margin-top:8px" @click="addCategory">确认添加分类</button>
+        </div>
+        <div style="margin-top:20px">
+            <h4>现有全部分类</h4>
+            <div v-for="(cate,idx) in categoryList" class="cate-item">
+                <span>{{cate}}</span>
+                <button class="btn-danger" @click="delCategory(idx)" v-if="!defaultCate.includes(cate)">删除</button>
+                <span v-else style="color:#999">系统默认不可删</span>
+            </div>
+        </div>
+    </div>
+
+    <!--菜谱列表-->
+    <div v-if="tab=='list'" class="card">
+        <div style="margin-bottom:15px">
+            <select v-model="filterCat">
+                <option value="">全部分类</option>
+                <option v-for="cate in categoryList" :value="cate">{{cate}}</option>
+            </select>
+        </div>
+        <div class="grid-menu">
+            <div class="food-card" v-for="(item,idx) in filterFoodList" :key="idx">
+                <img class="food-img" :src="item.img" onerror="this.src='https://picsum.photos/400/300?food'">
+                <div class="food-info">
+                    <h3>{{item.name}}</h3>
+                    <div>
+                        <span class="tag tag-cat">{{item.category}}</span>
+                        <span :class="['tag',getHardClass(item.difficulty)]">{{item.difficulty}}</span>
+                    </div>
+                    <p style="font-size:13px;margin-top:6px">🥬食材：{{item.material}}</p>
+                    <div class="btn-group">
+                        <button @click="editFood(idx)">编辑</button>
+                        <button class="btn-danger" @click="delFood(idx)">删除</button>
+                        <button class="btn-success" @click="selectDish(item)">加入菜单</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div v-if="filterFoodList.length===0" class="empty-tip">暂无菜品，请新增菜品或者添加分类</div>
+    </div>
+
+    <!--新增菜品页面，下拉加载所有自定义分类-->
+    <div v-if="tab=='add'" class="card">
+        <h3>{{editIndex>=0?'✏️编辑已有菜品':'➕ 添加新菜品'}}</h3>
+        <div class="form-item">
+            <label>菜品名称 *</label>
+            <input v-model="currFood.name" placeholder="例如：青椒肉丝">
+        </div>
+        <div class="form-item">
+            <label>菜品分类（可选自建分类）</label>
+            <select v-model="currFood.category">
+                <option v-for="cate in categoryList" :value="cate">{{cate}}</option>
+            </select>
+        </div>
+        <div class="form-item">
+            <label>制作难度</label>
+            <select v-model="currFood.difficulty">
+                <option value="简单">简单</option>
+                <option value="中等">中等</option>
+                <option value="困难">困难</option>
+            </select>
+        </div>
+        <div class="form-item">
+            <label>所需食材</label>
+            <textarea v-model="currFood.material" rows="2" placeholder="青椒、猪肉、生抽、盐"></textarea>
+        </div>
+        <div class="form-item">
+            <label>图片链接（可以留空）</label>
+            <input v-model="currFood.img" placeholder="粘贴网络图片地址，不填自动默认美食图">
+        </div>
+        <div class="btn-group">
+            <button class="btn-primary" @click="saveFood">{{editIndex>=0?'保存修改':'确认新增菜品'}}</button>
+            <button @click="resetForm">清空表单</button>
+        </div>
+    </div>
+
+    <!--随机点菜-->
+    <div v-if="tab=='random'" class="card">
+        <h3>🎲随机抽取菜品</h3>
+        <div style="text-align:center;padding:20px">
+            <div v-if="randomFood" class="sticky-note" style="display:inline-block">
+                <img :src="randomFood.img" style="width:260px;height:200px;object-fit:cover;border-radius:8px" onerror="this.src='https://picsum.photos/400/300?food'">
+                <h2 style="margin:12px 0">{{randomFood.name}}</h2>
+                <span class="tag tag-cat">{{randomFood.category}}</span>
+                <span :class="['tag',getHardClass(randomFood.difficulty)]">{{randomFood.difficulty}}</span>
+                <p style="margin-top:10px">🥬食材：{{randomFood.material}}</p>
+            </div>
+            <div v-else class="empty-tip">点击按钮随机抽菜</div>
+            <div class="btn-group" style="justify-content:center">
+                <button class="btn-primary" @click="doRandom">🎲随机点菜</button>
+                <button class="btn-success" v-if="randomFood" @click="selectDish(randomFood)">加入今日菜单</button>
+            </div>
+        </div>
+    </div>
+
+    <!--今日菜单-->
+    <div v-if="tab=='today'" class="card">
+        <h3>📅今日搭配菜单</h3>
+        <div v-if="todayList.length>0">
+            <div v-for="(food,i) in todayList" class="today-item">
+                <div style="display:flex;justify-content:space-between;flex-wrap:wrap">
+                    <div>
+                        <b>{{food.name}}</b>｜{{food.category}}｜{{food.difficulty}}
+                        <p style="font-size:13px;margin-top:4px">🥬食材：{{food.material}}</p>
+                    </div>
+                    <button class="btn-danger" @click="removeToday(i)">移除</button>
+                </div>
+            </div>
+            <div class="btn-group">
+                <button class="btn-danger" @click="clearToday">清空菜单</button>
+            </div>
+        </div>
+        <div v-else class="empty-tip">还没有菜品，前往菜谱库添加</div>
+    </div>
+</div>
+
+<script>
+new Vue({
+    el:'#app',
+    data(){
+        return {
+            tab:'list',
+            filterCat:'',
+            editIndex:-1,
+            randomFood:null,
+            todayList:[],
+            newCateName:'',
+            //系统默认分类，禁止删除
+            defaultCate:["家常菜","荤菜","素菜","汤品"],
+            categoryList:[],
+            currFood:{name:'',category:'家常菜',difficulty:'简单',material:'',img:''},
+            defaultFoods:[
+                {name:"番茄炒蛋",category:"家常菜",difficulty:"简单",material:"番茄2个、鸡蛋3颗、盐、白糖",img:"https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop"},
+                {name:"红烧排骨",category:"荤菜",difficulty:"中等",material:"排骨500g、冰糖、生抽、老抽、姜片、八角",img:"https://images.unsplash.com/photo-1544025162-d76694265947?w=400&h=300&fit=crop"},
+                {name:"清炒时蔬",category:"素菜",difficulty:"简单",material:"青菜300g、蒜末、盐、食用油",img:"https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=300&fit=crop"},
+                {name:"番茄蛋汤",category:"汤品",difficulty:"简单",material:"番茄1个、鸡蛋2颗、葱花、盐、香油",img:"https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=300&fit=crop"},
+            ],
+            foodList:[]
+        }
+    },
+    computed:{
+        filterFoodList(){
+            if(!this.filterCat) return this.foodList;
+            return this.foodList.filter(i=>i.category===this.filterCat)
+        }
+    },
+    mounted(){
+        this.loadData();
+    },
+    methods:{
+        loadData(){
+            //读取本地存储分类和菜品
+            let localCate = localStorage.getItem('menu_category');
+            let localFood = localStorage.getItem('familyMenu_foods');
+            if(localCate){
+                this.categoryList = JSON.parse(localCate);
+            }else{
+                this.categoryList = [...this.defaultCate];
+                this.saveCate();
+            }
+            if(localFood){
+                this.foodList = JSON.parse(localFood);
+            }else{
+                this.foodList = JSON.parse(JSON.stringify(this.defaultFoods));
+                this.saveFoods();
+            }
+        },
+        saveCate(){
+            localStorage.setItem('menu_category',JSON.stringify(this.categoryList))
+        },
+        saveFoods(){
+            localStorage.setItem('familyMenu_foods',JSON.stringify(this.foodList))
+        },
+        //新增自定义分类
+        addCategory(){
+            let name = this.newCateName.trim();
+            if(!name){alert('请输入分类名称');return}
+            if(this.categoryList.includes(name)){alert('该分类已存在');return}
+            this.categoryList.push(name);
+            this.saveCate();
+            this.newCateName = '';
+            alert('分类添加成功');
+        },
+        //删除自建分类
+        delCategory(idx){
+            this.categoryList.splice(idx,1);
+            this.saveCate();
+        },
+        getHardClass(lv){
+            if(lv==="简单") return "tag-hard-easy";
+            if(lv==="中等") return "tag-hard-middle";
+            return "tag-hard-hard";
+        },
+        saveFood(){
+            if(!this.currFood.name.trim()){alert("⚠️请填写菜品名称！");return;}
+            if(!this.currFood.img) this.currFood.img = "https://picsum.photos/400/300?food";
+            if(this.editIndex>=0){
+                this.foodList.splice(this.editIndex,1,{...this.currFood});
+            }else{
+                this.foodList.push({...this.currFood});
+            }
+            this.saveFoods();
+            this.resetForm();
+            this.tab="list";
+            alert("✅菜品保存成功");
+        },
+        editFood(idx){
+            this.editIndex = idx;
+            this.currFood = {...this.foodList[idx]};
+            this.tab="add";
+        },
+        delFood(idx){
+            if(confirm("确定删除菜品？")){
+                this.foodList.splice(idx,1);
+                this.saveFoods();
+            }
+        },
+        resetForm(){
+            this.editIndex=-1;
+            this.currFood = {name:'',category:this.categoryList[0],difficulty:'简单',material:'',img:''}
+        },
+        doRandom(){
+            if(this.foodList.length===0){alert("暂无菜品");return}
+            let index = Math.floor(Math.random()*this.foodList.length);
+            this.randomFood = this.foodList[index];
+        },
+        selectDish(item){
+            this.todayList.push({...item})
+        },
+        removeToday(idx){
+            this.todayList.splice(idx,1)
+        },
+        clearToday(){
+            this.todayList = [];
+        }
+    }
+})
+</script>
+</body>
+</html>
